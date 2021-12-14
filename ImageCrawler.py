@@ -21,7 +21,8 @@ ChangeLog
 """
 #imports section
 import os #to access file directory
-import re #for replacing 
+import re
+from tkinter import image_names #for replacing 
 import wget #to download image from FB
 import time #to set time to let page load
 import PySimpleGUI as sg #UI API
@@ -62,7 +63,6 @@ def driverini():
 def fbdatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
 
  driver = driverini()
-
  #Web page to login
  driver.get("http://www.facebook.com")
 
@@ -107,15 +107,26 @@ def fbdatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
         driver.get(a) #navigate to link
         time.sleep(2) #wait a bit
         img = driver.find_elements_by_tag_name("img")
-        images.append(img[1].get_attribute("src"))
+        images.append(img[0].get_attribute("src"))
  
- path= DIR_link 
- counter = 0
+ if DIR_link[-1] != '/':
+  DIR_link= DIR_link + "/"
+ 
+ if os.path.isfile(DIR_link +'out.csv')  :
+     df1 = pd.read_csv(DIR_link +'out.csv')
+     counter = df1.shape[0] +1
+ else:
+     counter = 0
+
+ df3 = pd.DataFrame(images) 
+ df3.to_csv(DIR_link +'out.csv', mode='a', header=False, index=False) 
  for image in images:
-     save_as = os.path.join(path, str(counter) + '.jpg')
+     save_as = os.path.join(DIR_link, str(counter) + '.jpg')
      wget.download(image, save_as)
      counter += 1
  
+
+
 
 #function to InstagramImageCrawling
 def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
@@ -143,7 +154,10 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
   URL_link= URL_link[:-1]
  if DIR_link [-1] != '/':
   DIR_link = DIR_link +"\\"
+ print(URL_link)
+ 
  driver.get(URL_link)
+ time.sleep(3)
   
  base = BeautifulSoup(driver.page_source,'html.parser')
  post_number = base.find('span',class_ = 'g47SY').get_text()
@@ -162,7 +176,16 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
         time.sleep(1.5)
  post_li_link = list(set(post_li_link))
  print(post_li_link)
+ 
+ if os.path.isfile(DIR_link +'out.csv')  :
+     df1 = pd.read_csv(DIR_link +'out.csv')
+     counter = df1.shape[0] +1
+ else:
+     counter = 0
 
+ df3 = pd.DataFrame(post_li_link) 
+ df3.to_csv(DIR_link +'out.csv', mode='a', header=False, index=False) 
+ 
 
  for lk in post_li_link:
          link = URL_link + lk
@@ -183,11 +206,11 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
                         else:
                             photo_counter += 1
                             print(link)
-                            download_image(DIR_link,y,photo_counter)
+                            download_image(DIR_link,y,photo_counter,counter)
                           
 
-def download_image(DIR_link,image_link,counter):
-    file_name =  DIR_link  +  (str(counter)) + '.jpg'
+def download_image(DIR_link,image_link,counter,count):
+    file_name =  DIR_link  +  (str(count)) + '.jpg'
     print(file_name)
     img_li = image_link.replace(' 1080w','')
     r = utr.urlopen(img_li)
@@ -302,7 +325,7 @@ def mainUI():
  sg.theme('LightBrown1')   
 
  
- layout = [  [sg.Text('Input the site you want to crawl'),sg.Input("https://www.instagram.com/german__memes_/", key='dclink')],
+ layout = [  [sg.Text('Input the site you want to crawl'),sg.Input("https://www.instagram.com/deutsch._.meme/", key='dclink')],
             [sg.Text('Select the output Folder'),sg.Input('D:\InstaImageCrawlDemo',key='dcfile'), sg.FolderBrowse()],
             [sg.Text('Input the Account'),sg.Input("udetestsoonyik",key='dcmail')],
             [sg.Text('Input the Password'), sg.Input('Huawei123!', key='Password', password_char='*')],
@@ -356,43 +379,16 @@ def mainUI():
 mainUI()
     
 """
+test website and demo account
+
 https://www.facebook.com/Deutsch-Spa%C3%9F-104211548118278/
 soon.lee@stud.uni-due.de
 Ude123!
 
 https://www.instagram.com/deutsch._.meme/
+https://www.instagram.com/explore/tags/germanmeme/
 udetestsoonyik
 Ude123!
 
-https://www.instagram.com/explore/tags/germanmeme/
+
 """
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-
