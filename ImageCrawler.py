@@ -18,7 +18,14 @@ ChangeLog
 
 2021-06-24
 - Added insta link crawling and image download based on link in csv
+
+2021-12-10
+- Fixed known bug
+
 """
+
+
+
 #imports section
 import os #to access file directory
 import re
@@ -155,7 +162,7 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
  if DIR_link [-1] != '/':
   DIR_link = DIR_link +"\\"
  print(URL_link)
- 
+ time.sleep(5)
  driver.get(URL_link)
  time.sleep(3)
   
@@ -327,9 +334,9 @@ def mainUI():
  
  layout = [  [sg.Text('Input the site you want to crawl'),sg.Input("https://www.instagram.com/deutsch._.meme/", key='dclink')],
             [sg.Text('Select the output Folder'),sg.Input('D:\InstaImageCrawlDemo',key='dcfile'), sg.FolderBrowse()],
-            [sg.Text('Input the Account'),sg.Input("udetestsoonyik",key='dcmail')],
-            [sg.Text('Input the Password'), sg.Input('Huawei123!', key='Password', password_char='*')],
-            [sg.Button('Run'), sg.Button('Cancel'), sg.Text("Platform"), sg.Combo(["Facebook","Instagram","Instagram_link","Instagram_download"], default_value="Instagram", key='Plat')] 
+            [sg.Text('Input the Account'),sg.Input("soon.lee@stud.uni-due.de",key='dcmail')],
+            [sg.Text('Input the Password'), sg.Input('Ude123!', key='Password', password_char='*')],
+            [sg.Button('Run'), sg.Button('Cancel'), sg.Text("Platform"), sg.Combo(["Facebook","Instagram","Instagram_link","Instagram_download"], default_value="Facebook", key='Plat')] 
             ]
 
  # Create the Window
