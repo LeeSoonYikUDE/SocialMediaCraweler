@@ -33,7 +33,7 @@ color_names = list(named_colors)
 #color_names.append('no match')
 
 # get example picture
-img = cv2.imread('D:\\img.jpg')
+img = cv2.imread('D:\\notexttest\img11.jpg')
 img = cv2.resize(img, (150,150))
 # build tree
 tree = KDTree(color_tuples[:-1])
@@ -45,7 +45,8 @@ dist, idx = tree.query(img, distance_upper_bound=tolerance)
 # count and reattach names
 counts = dict(zip(color_names, np.bincount(idx.ravel(), None, ncol+1)))
 #print(colors.cnames)
-print(counts)
+#print(counts)
 a= list(counts.values())
 elm_count = a.count(0)
+print("11")
 print(elm_count)
