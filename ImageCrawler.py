@@ -198,6 +198,8 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
  post_li_link = []
  photo_counter = 0
  for i in range(int(post_number/10 +1)): 
+        if i >50:
+            break
         driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
         soup = BeautifulSoup(driver.page_source,'html.parser')
         posts = soup.findAll('a')
