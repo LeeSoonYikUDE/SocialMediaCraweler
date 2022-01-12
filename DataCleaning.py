@@ -90,6 +90,7 @@ def only_text_remove(rem,path):
     print("Executing only text image detection")
 
     #tolerance index
+
     cmax = 115
 
     # borrow a list of named colors from matplotlib
@@ -102,6 +103,7 @@ def only_text_remove(rem,path):
     color_tuples = list(named_colors.values())
     color_tuples = np.array(color_tuples)
     color_names = list(named_colors)
+
     
     Path = list(paths.list_images(path))
     for imagePath in Path:
@@ -120,7 +122,7 @@ def only_text_remove(rem,path):
         elm_count = a.count(0)
         print(imagePath + " index ： " + str(elm_count))
         if elm_count > cmax:
-            print(imagePath + "  Potentially contain only text with index of " )
+            print(imagePath + "  Potentially contain only text with index of " + str(elm_count) )
             if rem =='y':
                 os.remove(imagePath)
 
@@ -163,8 +165,7 @@ def lang_detect(img_path):
 def nonGermantext_remove(rem,path):
     print("Executing non German or no text image detection")
 
-    #if you have GPU supported PC, change gpu to True
-    #reader = easyocr.Reader(['de','en'], gpu = False)
+ 
     Path = list(paths.list_images(path))
 
     
@@ -205,6 +206,7 @@ if __name__ == '__main__':
     if args.text == True:
         only_text_remove(args.remove, args.path)
     if args.language == True:
+        #if you have GPU supported PC, change gpu to True
         reader = easyocr.Reader(['de','en'], gpu = False)
         nonGermantext_remove(args.remove, args.path)
 
