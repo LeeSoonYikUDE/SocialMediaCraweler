@@ -29,7 +29,7 @@ ChangeLog
 #imports section
 import os #to access file directory
 import re
-from tkinter import image_names #for replacing 
+#from tkinter import image_names #for replacing 
 import wget #to download image from FB
 import time #to set time to let page load
 import PySimpleGUI as sg #UI API
@@ -192,6 +192,7 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
  base = BeautifulSoup(driver.page_source,'html.parser')
  #get number of post to scroll down later
  post_number = base.find('span',class_ = 'g47SY').get_text()
+ #to remove uncessary expression in post number
  post_number = int(re.sub('[!@#$,]', '', post_number))
 
 
@@ -208,7 +209,23 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
                 post_li_link.append(post['href'])
         time.sleep(1.5)
  post_li_link = list(set(post_li_link))
- csv_list = [ "https://www.instagram.com"  + x for x in post_li_link]
+  
+
+
+ img_li_link = []
+ for lk in post_li_link:
+         link = URL_link + lk
+         print(link)
+         link = link.replace('/explore/tags','')
+         driver.get(link)
+         time.sleep(2)
+         try:
+             y = driver.find_element_by_css_selector("img[style='object-fit: cover;']").get_attribute('src')
+             img_li_link.append(y)
+         except:
+             print("unexpected error, go next")
+             
+ img_li_link = list(set(img_li_link))
  
 
  #Saving Output to CSV fle
@@ -222,38 +239,17 @@ def instadatacrawl(URL_link,DIR_link,DC_ID,DC_Pass):
  # datetime object containing current date and time    
  now = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
  head = ("Retrieved from " + URL_link + " at " + now)
- head = ("Retrieved from " + URL_link + " at " + now)
  
-
  #creating dataframe with headers of where and when the image is crawled
- df3 = pd.DataFrame(csv_list, columns= [head])
- df3.to_csv(DIR_link +'InstaCrawlOut.csv', mode='a') 
-
-
- 
+ df3 = pd.DataFrame(img_li_link, columns= [head])
+ df3.to_csv(DIR_link +'InstaCrawlOut.csv', mode='a')
  photo_counter = counter
- for lk in post_li_link:
-         link = URL_link + lk
-         print(link)
-         link = link.replace('/explore/tags','')
-         driver.get(link)
-         time.sleep(2)
-         soup = BeautifulSoup(driver.page_source,'html.parser')
-         images = soup.findAll('img')
-         for image in images:
-            if image.has_attr('srcset'):
-                #to find whether there is higher resolution version oh image
-                if image['srcset'].find('1080w') == -1 :
-                    pass
-                else:
-                    x = image['srcset'].split(',')
-                    for y in x:
-                        if y.find('1080w') == -1 :
-                            pass
-                        else:
-                            download_image(DIR_link,y,photo_counter)
-                            photo_counter += 1
-                          
+ for link in img_li_link:
+     download_image(DIR_link,link,photo_counter)
+     photo_counter += 1
+
+  
+                         
 
 def download_image(DIR_link,image_link,counter):
     file_name =  DIR_link  +  (str(counter)) + '.jpg'
@@ -266,7 +262,7 @@ def download_image(DIR_link,image_link,counter):
 #Function for main window UI
 def mainUI() :
  sg.theme('LightBrown1')   
-
+ # input the default value for long term use to avoid inputting same value when running
  layout = [  [sg.Text('Input the site you want to crawl'),sg.Input("https://www.instagram.com/deutsch._.meme/", key='dclink')],
             [sg.Text('Select the output Folder'),sg.Input('D:\InstaImageCrawlDemo',key='dcfile'), sg.FolderBrowse()],
             [sg.Text('Input the Account'),sg.Input("udetestsoonyik",key='dcmail')],

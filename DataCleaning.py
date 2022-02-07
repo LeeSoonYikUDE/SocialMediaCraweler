@@ -1,4 +1,5 @@
 import argparse
+from ast import If
 from imutils import paths
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
@@ -11,6 +12,7 @@ from matplotlib import colors
 from scipy.spatial import cKDTree as KDTree
 from scipy.misc import face
 import timeit
+import wget
 
 start = timeit.default_timer()
 
@@ -45,7 +47,7 @@ def duplicate_remove(rem,path):
  #List out every images in the directory
  Path = list(paths.list_images(path))
 
- #If you dont't want to show the duplicate, put 0
+ #If you  want to show the metric value, put 1
  show_duplicate = 0
  # change the tolerance when necessary, 1 is duplicate, the less the number, the less the similarity
  d_limit= 0.9
@@ -85,12 +87,11 @@ def duplicate_remove(rem,path):
 
 
 
-
+#function to check whether the image have plain background
 def only_text_remove(rem,path):
     print("Executing only text image detection")
 
     #tolerance index
-
     cmax = 115
 
     # borrow a list of named colors from matplotlib
@@ -103,6 +104,7 @@ def only_text_remove(rem,path):
     color_tuples = list(named_colors.values())
     color_tuples = np.array(color_tuples)
     color_names = list(named_colors)
+    print(len(color_names))
 
     
     Path = list(paths.list_images(path))
@@ -114,7 +116,7 @@ def only_text_remove(rem,path):
         # tolerance for color match `inf` means use best match no matter how bad it may be
         tolerance = np.inf
         # find closest color in tree for each pixel in picture
-        dist, idx = tree.query(img, distance_upper_bound=tolerance)
+        dist,idx = tree.query(img, distance_upper_bound=tolerance)
         # count and reattach names
         counts = dict(zip(color_names, np.bincount(idx.ravel(), None, ncol+1)))
         #count the number of color element which are 0
@@ -127,6 +129,7 @@ def only_text_remove(rem,path):
                 os.remove(imagePath)
 
 
+#function to detect non-german text in image
 def lang_detect(img_path):
  result = reader.readtext( img_path ,detail = 0, paragraph=True)
  #check the text, return 1(not german) if no text or less word is detected
@@ -140,6 +143,7 @@ def lang_detect(img_path):
  for item in result:
       count = count + len(item.split())
  print("total number of words : "  + str(count))
+ #adjust the max word and min word according to the needs
  if count >30 :
      return 1
  if count < 2 :
@@ -181,6 +185,32 @@ def nonGermantext_remove(rem,path):
             print("-------------------------")
 
 
+#function to format and standardize name
+def image_formating(rem,path):
+    #extract all the image path
+    Path = list(paths.list_images(path))
+    #set 1 if you want to enable resize
+    Rsize = 0
+
+    counter = 1
+    for imagePath in Path:
+        #read and resize image
+        img = cv2.imread(imagePath)
+        if Rsize ==1 :
+            img = cv2.resize(img, (500,500))
+        
+        #To remove old image
+        if rem == 'y' :
+            os.remove(imagePath)
+
+        #save the modified image in standard form, adjust according to need
+        cv2.imwrite(path +"//New" + str(counter) + '.jpg',img)
+        counter += 1
+
+
+
+
+
 
 # Argument Parser statement
 ap = argparse.ArgumentParser()
@@ -190,11 +220,13 @@ ap.add_argument("-r", "--remove", type=str.lower, required=True,default="N",
     choices=["Y", "N","y","n"],
     help="Option whether to remove once dirtiness of image data detected")
 ap.add_argument("-d", "--duplicate", action='store_true',
-    help="Detect duplicates and near duplicates in the directory")
+    help="Detect dupicates and near duplicates in the directory")
 ap.add_argument("-l", "--language",action='store_true',
-    help="Remove images that are not in German language")
+    help="Detect images that are not in German language")
 ap.add_argument("-t", "--text", action='store_true',
-    help="Remove images with only text")
+    help="Detect images with plain background")
+ap.add_argument("-f", "--format", action='store_true',
+    help="Image normalization")
 
 args = ap.parse_args()
 
@@ -207,8 +239,10 @@ if __name__ == '__main__':
         only_text_remove(args.remove, args.path)
     if args.language == True:
         #if you have GPU supported PC, change gpu to True
-        reader = easyocr.Reader(['de','en'], gpu = False)
+        reader = easyocr.Reader(['de'], gpu = True)
         nonGermantext_remove(args.remove, args.path)
+    if args.format == True:
+        image_formating(args.remove, args.path)
 
 
 stop = timeit.default_timer()
