@@ -1,5 +1,6 @@
 import argparse
-from ast import If
+from ast import And, If
+from time import perf_counter
 from imutils import paths
 import numpy as np
 from skimage.metrics import structural_similarity as ssim
@@ -18,13 +19,14 @@ start = timeit.default_timer()
 
 
 #Function to compare to images and show the SSIM result
-def compare_images(imageA, imageB,Path1,Path2,shw):
+def compare_images(imageA, imageB,Path1,Path2,shw,d_limit):
     # compute the structural similarity
     s = ssim(imageA, imageB)
     title="image compare"
-    if shw == 1:
+    if shw == 1 and s>d_limit:
         fig = plt.figure(title)
-        plt.suptitle("%s, %s , Similarity: %.2f" % (Path1,Path2,s))
+        plt.suptitle("SSIM : %.2f" % (s))
+        #plt.suptitle("%s, %s , SSIM: %.2f" % (Path1,Path2,s))
         ax = fig.add_subplot(1, 2, 1)
         plt.imshow(imageA, cmap = plt.cm.gray)
         plt.axis("off")
@@ -50,7 +52,7 @@ def duplicate_remove(rem,path):
  #If you  want to show the metric value, put 1
  show_duplicate = 0
  # change the tolerance when necessary, 1 is duplicate, the less the number, the less the similarity
- d_limit= 0.9
+ d_limit= 0.98
 
 
  list_len = len(Path)
@@ -65,11 +67,11 @@ def duplicate_remove(rem,path):
              print(Path[i], "compare with", Path[j])
              img1 = cv2.imread(Path[i])
              img2 = cv2.imread(Path[j])
-             img1= cv2.resize(img1, (200,200))
-             img2= cv2.resize(img2, (200,200))
+             img1= cv2.resize(img1, (500,500))
+             img2= cv2.resize(img2, (500,500))
              img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
              img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-             result= compare_images(img1,img2,os.path.basename(Path[i]),os.path.basename(Path[j]),show_duplicate)
+             result= compare_images(img1,img2,os.path.basename(Path[i]),os.path.basename(Path[j]),show_duplicate,d_limit)
              print("SSIM :" + str(result))
              if result > d_limit :
                  rmlist.append(Path[j])
@@ -92,7 +94,7 @@ def only_text_remove(rem,path):
     print("Executing only text image detection")
 
     #tolerance index
-    cmax = 115
+    cmax = 100
 
     # borrow a list of named colors from matplotlib
     use_colors = colors.cnames
@@ -104,9 +106,9 @@ def only_text_remove(rem,path):
     color_tuples = list(named_colors.values())
     color_tuples = np.array(color_tuples)
     color_names = list(named_colors)
-    print(len(color_names))
+    print("Number of color in color list: "+ str(len(color_names)))
 
-    
+    average =0
     Path = list(paths.list_images(path))
     for imagePath in Path:
         # get example picture
@@ -122,11 +124,14 @@ def only_text_remove(rem,path):
         #count the number of color element which are 0
         a= list(counts.values())
         elm_count = a.count(0)
+        #average = average + elm_count
         print(imagePath + " index ： " + str(elm_count))
         if elm_count > cmax:
-            print(imagePath + "  Potentially contain only text with index of " + str(elm_count) )
+            average = average +1
+            print(imagePath + "  Potentially contain only plain background with index of " + str(elm_count) )
             if rem =='y':
                 os.remove(imagePath)
+    print(average)
 
 
 #function to detect non-german text in image
@@ -144,17 +149,17 @@ def lang_detect(img_path):
       count = count + len(item.split())
  print("total number of words : "  + str(count))
  #adjust the max word and min word according to the needs
- if count >30 :
+ if count > 24 :
      return 1
- if count < 2 :
+ if count < 0 :
      return 1
 
  try:
         language = detect(str(result))
  except:
         language = "error"
-        return 1
- 
+        return  1
+
 
 
  if language == "de":
@@ -169,12 +174,13 @@ def lang_detect(img_path):
 def nonGermantext_remove(rem,path):
     print("Executing non German or no text image detection")
 
- 
+    p_count= 0
     Path = list(paths.list_images(path))
 
     
     for imagePath in Path:
         image = lang_detect(imagePath)
+        p_count = p_count + image
         if image == 1:
             print(imagePath +" contain either non German or no text")
             print("-------------------------")
@@ -183,6 +189,8 @@ def nonGermantext_remove(rem,path):
         else :
             print(imagePath + " contain german text")
             print("-------------------------")
+    resul=  p_count / len(Path)     
+    print("Number of Non-German image found:" + str(resul) )
 
 
 #function to format and standardize name
